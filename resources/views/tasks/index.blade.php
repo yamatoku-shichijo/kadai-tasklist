@@ -25,6 +25,8 @@
                 @endforeach
             </tbody>
         </table>
+           {{-- ページネーションのリンク --}}
+    {{ $tasks->links() }}
     @endif
     
     <a class="btn btn-primary" href="{{ route('tasks.create') }}">新規タスクの追加</a>

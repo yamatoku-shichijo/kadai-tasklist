@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\Auth;
 use App\Models\Task;
 
 class TasksController extends Controller
@@ -12,7 +13,7 @@ class TasksController extends Controller
     public function index()
     {
         // タスク一覧を収得
-        $tasks = Task::all();
+        $tasks = Task::orderBy('id', 'desc')->paginate(10);
         
         // タスク一覧ビューでそれを表示
         return view('tasks.index', [
@@ -46,7 +47,7 @@ class TasksController extends Controller
         $task->save();
         
         // トップページへリダイレクトさせる
-        return redirect('/');
+        return redirect( route('tasks.index') ); //redirect('/')から変えた
     }
 
     // getでtasks/ (任意のid)にアクセスされた場合の「収得表示処理」
@@ -89,7 +90,7 @@ class TasksController extends Controller
         $task->save();
         
         // トップページへリダイレクトさせる
-        return redirect('/');
+        return redirect( route('tasks.index') ); //redirect('/')から変えた
     }
 
     // deleteでtasks/ (任意のid)にアクセスされた場合の「削除処理」
@@ -101,6 +102,6 @@ class TasksController extends Controller
         $task->delete();
         
         // トップページヘリダイレクトさせる
-        return redirect('/');
+        return redirect( route('tasks.index') ); //redirect('/')から変えた
     }
 }
