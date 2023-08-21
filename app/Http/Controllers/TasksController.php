@@ -17,7 +17,7 @@ class TasksController extends Controller
             //認証済みユーザを収得
             $user = \Auth::user();
             // タスク一覧を収得 変更した
-            $tasks = Task::orderBy('id', 'desc')->paginate(10);
+            $tasks = $user->tasks()->orderBy('id', 'desc')->paginate(10);
             $data = [
                 'user' => $user,
                 'tasks' => $tasks,
@@ -35,13 +35,10 @@ class TasksController extends Controller
         $task = new Task;
         
         // タスク作成ビューを表示
-        if(\Auth::check()) {
         return view('tasks.create', [
             'task' => $task,
             ]);
-        }
         
-        return redirect('/');
     }
 
     // postでtasks/にアクセスされた場合の「新規登録処理」
@@ -54,6 +51,7 @@ class TasksController extends Controller
             ]);
         
         // $task = new Task;
+        // $task->user_id = \Auth::user();
         // $task->status = $request->status;
         // $task->content = $request->content;
         // $task->save();
@@ -110,16 +108,15 @@ class TasksController extends Controller
         //idの値でタスクを検索して収得
         $task = Task::findOrFail($id);
         // タスクを更新
-        // $task->status = $request->status;
-        // $task->content = $request->content;
-        // $task->save();
-        $request->user()->tasks()->create([
-            'content' => $request->content,
-            'status' => $request->status,
-            ]);
-        
+        if(\Auth::id() === $task->user_id) {
+        $task->status = $request->status;
+        $task->content = $request->content;
+        $task->save();
         // トップページへリダイレクトさせる
         return redirect( route('tasks.index') ); //redirect('/')から変えた
+        }
+        
+        return redirect('/');
     }
 
     // deleteでtasks/ (任意のid)にアクセスされた場合の「削除処理」
