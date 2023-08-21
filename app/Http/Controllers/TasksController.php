@@ -12,13 +12,21 @@ class TasksController extends Controller
     // getでtasks/にアクセスされた場合の「一覧表示処理」
     public function index()
     {
-        // タスク一覧を収得
-        $tasks = Task::orderBy('id', 'desc')->paginate(10);
+        $data = [];
+        if(\Auth::check()) { //認証済みの場合
+            //認証済みユーザを収得
+            $user = \Auth::user();
+            // タスク一覧を収得 変更した
+            $tasks = Task::orderBy('id', 'desc')->paginate(10);
+            $data = [
+                'user' => $user,
+                'tasks' => $tasks,
+                ];
+        
+        }
         
         // タスク一覧ビューでそれを表示
-        return view('tasks.index', [
-            'tasks' => $tasks,
-            ]);
+        return view('dashboard', $data);
     }
 
     // getでtasks/createにアクセスされた場合の「新規登録画面表示処理」
@@ -27,9 +35,13 @@ class TasksController extends Controller
         $task = new Task;
         
         // タスク作成ビューを表示
+        if(\Auth::check()) {
         return view('tasks.create', [
             'task' => $task,
             ]);
+        }
+        
+        return redirect('/');
     }
 
     // postでtasks/にアクセスされた場合の「新規登録処理」
@@ -41,10 +53,15 @@ class TasksController extends Controller
             'content' => 'required|max:255',
             ]);
         
-        $task = new Task;
-        $task->status = $request->status;
-        $task->content = $request->content;
-        $task->save();
+        // $task = new Task;
+        // $task->status = $request->status;
+        // $task->content = $request->content;
+        // $task->save();
+        
+        $request->user()->tasks()->create([
+            'content' => $request->content,
+            'status' => $request->status,
+        ]);
         
         // トップページへリダイレクトさせる
         return redirect( route('tasks.index') ); //redirect('/')から変えた
@@ -57,9 +74,13 @@ class TasksController extends Controller
         $task = Task::findOrFail($id);
         
         // タスク詳細ビューでそれを表示
+        if(\Auth::id() === $task->user_id) {
         return view('tasks.show', [
             'task' => $task,
             ]);
+        }
+        
+        return redirect('/');
     }
 
     // getでtasks/　(任意のid) /edit にアクセスされた場合の「更新画面表示処理」
@@ -69,9 +90,13 @@ class TasksController extends Controller
         $task = Task::findOrFail($id);
         
         // タスク編集ビューでそれを表示
+        if(\Auth::id() === $task->user_id) {
         return view('tasks.edit', [
             'task' => $task,
             ]);
+        }
+        
+        return redirect('/');
     }
 
     // putまたはpatchでtasks/ (任意のid)にアクセスされた場合の「更新処理」
@@ -85,9 +110,13 @@ class TasksController extends Controller
         //idの値でタスクを検索して収得
         $task = Task::findOrFail($id);
         // タスクを更新
-        $task->status = $request->status;
-        $task->content = $request->content;
-        $task->save();
+        // $task->status = $request->status;
+        // $task->content = $request->content;
+        // $task->save();
+        $request->user()->tasks()->create([
+            'content' => $request->content,
+            'status' => $request->status,
+            ]);
         
         // トップページへリダイレクトさせる
         return redirect( route('tasks.index') ); //redirect('/')から変えた
@@ -96,12 +125,18 @@ class TasksController extends Controller
     // deleteでtasks/ (任意のid)にアクセスされた場合の「削除処理」
     public function destroy($id)
     {
-        //idの値でメッセージを収得
+        //idの値でタスクを収得
         $task = Task::findOrFail($id);
         // メッセージを削除
-        $task->delete();
+        if(\Auth::id() === $task->user_id) {
+            $task->delete();
+            return redirect( route('tasks.index') )
+                ->with('success', 'Delete Successful');
+        }
+ 
         
         // トップページヘリダイレクトさせる
-        return redirect( route('tasks.index') ); //redirect('/')から変えた
+        return redirect( route('/') )//tasklist.indexから変えたが多分変わらない
+            ->with('Delete Failed'); //redirect('/')から変えた
     }
 }
